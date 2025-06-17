@@ -1,17 +1,19 @@
+
 import { createContext, useContext, useMemo } from "react";
 import { io } from "socket.io-client";
+
 
 const SocketContext = createContext(null);
 export const useSocket = () => {
   const context = useContext(SocketContext);
   return context;
 }
-export const SocketProvider = (props) => {
+export const SocketProvider = ({children}) => {
 
-    const socket = useMemo(() => io("192.168.0.119:8000"), []);
+    const socket = useMemo(() => io(`${process.env.EXPO_PUBLIC_API_URL}:${process.env.EXPO_PUBLIC_API_PORT}`), []);
   return (
     <SocketContext.Provider value={socket}>
-      {props.children}
+      {children}
     </SocketContext.Provider>
   );
 };

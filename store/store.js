@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 
-const useRTCStore = create((set, get) => ({
-  rtc: {},
-  setRTC: (rtc) => set({ rtc }),
-  getRTC: () => get().rtc,
+const UsernameState = create((set, get) => ({
+  User: {},
+  setUser: (User) => set({ User }),
+  getUser: () => get().User,
 }))
 
-export default useRTCStore;
+export { UsernameState };
 
 

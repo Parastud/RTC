@@ -2,10 +2,10 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Button, TextInput, View } from "react-native";
 import { useSocket } from "../context/Socketprovider";
-import useRTCStore from "../store/store";
+import { UsernameState } from "../store/store";
 export default function Index() {
   const io = useSocket();
-  const rtc = useRTCStore();
+  const {setUser} = UsernameState();
   const Router = useRouter();
   const [form, setform] = useState({})
   const handleChange = (name,value)=>{
@@ -28,10 +28,11 @@ export default function Index() {
       }
     });
 
-    rtc.setRTC({
+    setUser({
       Username: form.Username,
       RoomId: form.RoomId,
     });
+   
   }, [io, form.Username, form.RoomId]);
 
   return (
