@@ -17,6 +17,7 @@
     "@react-navigation/native": "^7.1.6",
     "expo": "~53.0.11",
     "expo-blur": "~14.1.5",
+    "expo-camera": "~16.1.8",
     "expo-constants": "~17.1.6",
     "expo-font": "~13.3.1",
     "expo-haptics": "~14.1.4",
@@ -38,10 +39,14 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-video-player": "^0.16.3",
     "react-native-web": "~0.20.0",
+    "react-native-webrtc": "^124.0.5",
     "react-native-webview": "13.13.5",
+    "react-player": "^2.16.0",
     "socket.io-client": "^4.8.1",
-    "zustand": "^5.0.5"
+    "zustand": "^5.0.5",
+    "expo-av": "~15.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

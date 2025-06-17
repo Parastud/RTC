@@ -15,18 +15,21 @@ io.on('connection', (socket) => {
   }
 
   socket.join(RoomId);
+  io.to(RoomId).emit("joined",{Username,type:"alert"})
   console.log(`${Username} joined room ${RoomId}`);
   return callback({ success: true, roomId: RoomId });
 
 });
+
 
 socket.on("sendMessage",({roomId, message, Username},)=>{
   if (!roomId || !message) {
     console.log("RoomId and message are required");
     return;
   }
+  
 
   console.log(`Message received in room ${roomId}: ${message}`);
-  io.to(roomId).emit("receiveMessage", { roomId, message, Username });
+  io.to(roomId).emit("receiveMessage", { roomId, message, Username, type:"msg" });
 })
 });

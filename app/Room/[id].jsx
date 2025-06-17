@@ -1,73 +1,101 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { mediaDevices } from 'react-native-webrtc';
 import { useSocket } from '../../context/Socketprovider';
-import useRTCStore from "../../store/store";
+import { UsernameState } from "../../store/store";
+
 const Room = () => {
-  const rtc = useRTCStore(state => state.getRTC());
-  const [Msgs, setMsgs] = useState([])
+  const { getUser } = UsernameState();
   const socket = useSocket();
-  const Navigation = useNavigation();
   const { id } = useLocalSearchParams();
-  useLayoutEffect(() => {
-    Navigation.setOptions({
-      title: `${id}`,
-    });
-  }, []);
+  const Navigation = useNavigation();
 
-  const [Msg, setMsg] = useState("")
-
-  const HandleChange = (text) => {
-    setMsg(text);
-  }
-  const HandleMsgSend = () => {
-    if (Msg.trim() === "") {
-      return;
-    }
-    socket.emit("sendMessage", { roomId: id, message: Msg, Username: rtc?.Username });
-    setMsg("");
-  }
+  const [Msgs, setMsgs] = useState([]);
+  const [Msg, setMsg] = useState('');
+  const [localStream, setLocalStream] = useState(null);
 
   useEffect(() => {
-    socket.on("receiveMessage", ({ message, Username }) => {
-      setMsgs((prevMsgs) => [
-        ...prevMsgs,
-        { Username, message }
-      ]);
-    });
+    Navigation.setOptions({ title: `${id}` });
+  }, []);
 
-    return () => {
-      socket.off("receiveMessage");
-    };
+  useEffect(() => {
+    socket.on("receiveMessage", handleReceivemsg);
+    socket.on("joined", handlejoin)
+
+    return () =>{
+      socket.off("receiveMessage",handleReceivemsg), 
+      socket.off("joined",handlejoin)}
   }, [socket]);
 
+  const HandleChange = (text) => setMsg(text);
 
+  const handlejoin = useCallback(({Username,type})=>{
+      setMsgs(prevMsgs => [...prevMsgs, { Username,type }])
+      console.log(Username)
+  },[])
 
+  const handleReceivemsg = useCallback(({ message, Username,type }) => {
+      setMsgs(prevMsgs => [...prevMsgs, { Username, message,type }])
+    },[])
 
+  const HandleMsgSend = () => {
+    if (Msg.trim() === "") return;
+    socket.emit("sendMessage", { roomId: id, message: Msg, Username: getUser()?.Username });
+    setMsg("");
+  };
+
+  useEffect(() => {
+    const startCamera = async () => {
+      try {
+        const stream = await mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+        setLocalStream(stream);
+      } catch (e) {
+        console.error("Camera Error", e);
+      }
+    };
+    startCamera();
+  }, []);
 
   return (
-    <View className="absolute left-0 right-0 p-4 bottom-0">
+    <View className="flex-1 bg-white">
+      {/* {localStream && (
+        <RTCView
+          streamURL={localStream.toURL()}
+          style={{ width: '100%', height: 300 }}
+          objectFit="cover"
+        />
+      )} */}
+
       <FlatList
         data={Msgs}
         keyExtractor={(item, index) => `${item.Username}-${index}`}
         renderItem={({ item }) => (
-          <View className="p-2 my-1 bg-white rounded shadow">
-            <Text className="font-bold">{item.Username}</Text>
-            <Text>{item.message}</Text>
+          <View className="p-2 my-1 bg-gray-100 rounded">
+            {item?.type=="alert" && 
+            <Text>{item.Username} Joined the room</Text>}
+            {item?.type=="msg" &&
+            <><Text className="font-bold">{item.Username}</Text><Text>{item.message}</Text></> }
           </View>
         )}
       />
-      <View className="p-4 bg-gray-200 rounded">
-        <TextInput placeholder='Enter Msg' value={Msg} onChangeText={HandleChange} />
-        <TouchableOpacity className="absolute right-0 top-5" onPress={HandleMsgSend}>
-          <MaterialIcons name="send" size={32} color="black" />
+
+      <View className="flex-row items-center bg-gray-200 p-2">
+        <TextInput
+          placeholder='Enter Msg'
+          value={Msg}
+          onChangeText={HandleChange}
+          className="flex-1 bg-white p-2 rounded"
+        />
+        <TouchableOpacity onPress={HandleMsgSend} className="ml-2">
+          <Text>Send</Text>
         </TouchableOpacity>
       </View>
     </View>
-  )
-}
+  );
+};
 
-export default Room
-
-
+export default Room;
