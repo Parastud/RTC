@@ -36,7 +36,7 @@ export default function Index() {
   }, [io, form.Username, form.RoomId]);
 
   return (
-    <View className="flex-1 items-center justify-center bg-white">
+    <View className="flex-1 items-center justify-center bg-slate-600">
       
       <View className="w-64 gap-4">
 

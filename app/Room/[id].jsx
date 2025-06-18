@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { mediaDevices } from 'react-native-webrtc';
+import { mediaDevices, RTCView } from 'react-native-webrtc';
+import { usePeer } from '../../context/Peerprovider';
 import { useSocket } from '../../context/Socketprovider';
 import { UsernameState } from "../../store/store";
 
 const Room = () => {
-  const { getUser } = UsernameState();
+  const {peer, createOffer,createAnswer,SetRemoteAnswer,sendStream,RemoteStream} = usePeer()
+  const { getUser,  } = UsernameState();
   const socket = useSocket();
   const { id } = useLocalSearchParams();
   const Navigation = useNavigation();
@@ -19,21 +21,49 @@ const Room = () => {
     Navigation.setOptions({ title: `${id}` });
   }, []);
 
+
+  useEffect(() => {
+    sendStream(localStream)
+  }, [localStream])
+  
+  
+
   useEffect(() => {
     socket.on("receiveMessage", handleReceivemsg);
     socket.on("joined", handlejoin)
+    socket.on("incall",handlecall)
+    socket.on("accepted",handleaccepted)
 
     return () =>{
       socket.off("receiveMessage",handleReceivemsg), 
-      socket.off("joined",handlejoin)}
+      socket.off("joined",handlejoin)
+      socket.off("incall",handlecall)
+      socket.off("accepted",handleaccepted)}
   }, [socket]);
+
+  const handleaccepted = useCallback(async({ans})=>{
+    await SetRemoteAnswer(ans)
+    
+
+  },[handleaccepted,localStream])
+
+  const handlecall = useCallback(async({offer})=>{
+    const ans = await createAnswer(offer)
+    socket.emit("accept",{ans,room:getUser()?.RoomId})
+  },[handlecall,socket,createAnswer])
+  
 
   const HandleChange = (text) => setMsg(text);
 
-  const handlejoin = useCallback(({Username,type})=>{
+  const handletest = async()=>{
+    const offer = await createOffer()
+    socket.emit('call',{room:getUser()?.RoomId,offer})
+  }
+
+  const handlejoin = useCallback(async({Username,type})=>{
       setMsgs(prevMsgs => [...prevMsgs, { Username,type }])
-      console.log(Username)
-  },[])
+      handletest()
+  },[createOffer])
 
   const handleReceivemsg = useCallback(({ message, Username,type }) => {
       setMsgs(prevMsgs => [...prevMsgs, { Username, message,type }])
@@ -45,6 +75,9 @@ const Room = () => {
     setMsg("");
   };
 
+ 
+  
+
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -52,7 +85,7 @@ const Room = () => {
           video: true,
           audio: true
         });
-        setLocalStream(stream);
+        setLocalStream(stream)
       } catch (e) {
         console.error("Camera Error", e);
       }
@@ -62,13 +95,20 @@ const Room = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* {localStream && (
+      {localStream && (
         <RTCView
           streamURL={localStream.toURL()}
           style={{ width: '100%', height: 300 }}
           objectFit="cover"
         />
-      )} */}
+      )} 
+      {RemoteStream &&(
+        <RTCView
+        streamURL={RemoteStream.toURL()}
+                  style={{ width: '100%', height: 300 }}
+          objectFit="cover"
+        />
+      )}
 
       <FlatList
         data={Msgs}
