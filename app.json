@@ -9,12 +9,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rtc.parastud",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-            "permissions": [
+      "permissions": [
         "CAMERA",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -29,12 +35,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      ["expo-camera",
+      [
+        "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
-        }],
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -52,7 +60,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "82cd944d-2294-4265-966c-866b429d439b"
+        "projectId": "82cd944d-2294-4265-966c-866b429d439b",
+        "env": "development"
       }
     },
     "owner": "parastud"
