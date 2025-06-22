@@ -1,9 +1,12 @@
+import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SafeAreaView } from 'react-native';
 import { mediaDevices, RTCView } from 'react-native-webrtc';
+import ToastManager, { Toast } from 'toastify-react-native';
 import { usePeer } from '../../context/Peerprovider';
 import { useSocket } from '../../context/Socketprovider';
+import Chat from '../../OtherScreens/Chat';
 import { UsernameState } from "../../store/store";
 
 const Room = () => {
@@ -14,6 +17,9 @@ const Room = () => {
   const [Msgs, setMsgs] = useState([]);
   const [Msg, setMsg] = useState('');
   const [localStream, setLocalStream] = useState(null);
+  const bottomSheet = useRef(null);
+  const snapPoints = useMemo(() => ['25%', '50%', '75%', '100%'], [])
+
 
   useEffect(() => {
     Navigation.setOptions({ title: `${getUser()?.RoomId}` });
@@ -22,6 +28,12 @@ const Room = () => {
   useEffect(() => {
     sendStream(localStream)
   }, [localStream])
+
+  const Renegotiate = () => {
+    const offer = peer.localDescription
+    socket.emit('call', { room: getUser()?.RoomId, offer })
+  }
+
 
   useEffect(() => {
     socket.on("receiveMessage", handleReceivemsg);
@@ -54,6 +66,8 @@ const Room = () => {
 
   const handleaccepted = useCallback(async ({ ans }) => {
     await SetRemoteAnswer(ans)
+    Renegotiate()
+
   }, [handleaccepted, localStream])
 
   const handlecall = useCallback(async ({ offer }) => {
@@ -64,6 +78,8 @@ const Room = () => {
   const handlejoin = useCallback(async ({ Username, type }) => {
     const offer = await createOffer()
     socket.emit('call', { room: getUser()?.RoomId, offer })
+    console.log("ho")
+    Toast.success(`${Username} Joined the Room`)
     setMsgs(prevMsgs => [...prevMsgs, { Username, type }])
   }, [createOffer])
 
@@ -71,56 +87,51 @@ const Room = () => {
     setMsgs(prevMsgs => [...prevMsgs, { Username, message, type }])
   }, [handleReceivemsg])
 
-  const HandleMsgSend = () => {
-    if (Msg.trim() === "") return;
-    socket.emit("sendMessage", { roomId: getUser()?.RoomId, message: Msg, Username: getUser()?.Username });
-    setMsg("");
-  };
-
-  const HandleChange = (text) => setMsg(text);
-
   return (
-    <View className="flex-1 bg-white">
-      {localStream && (
-        <RTCView
-          streamURL={localStream.toURL()}
-          style={{ width: '100%', height: 300 }}
-          objectFit="cover"
-        />
-      )}
-      {RemoteStream && (
-        <RTCView
-          streamURL={RemoteStream.toURL()}
-          style={{ width: '100%', height: 300 }}
-          objectFit="cover"
-        />
-      )}
+    <SafeAreaView className="flex-1 bg-white">
+      <ToastManager />
+  {RemoteStream && (
+    <RTCView
+    key={RemoteStream?.id}
+      streamURL={RemoteStream.toURL()}
+      style={{
+        width: '100%',
+        height: '100%',
+        zIndex: 10,
+        position: 'absolute',
+      }}
+      objectFit="cover"
+    />
+  )}
 
-      <FlatList
-        data={Msgs}
-        keyExtractor={(item, index) => `${item.Username}-${index}`}
-        renderItem={({ item }) => (
-          <View className="p-2 my-1 bg-gray-100 rounded">
-            {item?.type == "alert" &&
-              <Text>{item.Username} Joined the room</Text>}
-            {item?.type == "msg" &&
-              <><Text className="font-bold">{item.Username}</Text><Text>{item.message}</Text></>}
-          </View>
-        )}
-      />
+  {localStream && (
+    <RTCView
+    key={localStream?.id}
+      streamURL={localStream.toURL()}
+      style={{
+        width: '50%',
+        height: '30%',
+        zIndex: 20, // Make sure it's on top
+        position: 'absolute',
+        right: 10,
+        bottom: 10,
+        borderWidth: 1,
+        borderColor: '#fff', // Optional for debugging
+      }}
+      objectFit="cover"
+    />
+  )}
 
-      <View className="flex-row items-center bg-gray-200 p-2">
-        <TextInput
-          placeholder='Enter Msg'
-          value={Msg}
-          onChangeText={HandleChange}
-          className="flex-1 bg-white p-2 rounded"
-        />
-        <TouchableOpacity onPress={HandleMsgSend} className="ml-2">
-          <Text>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <BottomSheet
+        ref={bottomSheet}
+        snapPoints={snapPoints}
+        index={-1}
+        containerStyle={{ zIndex: 100 }}
+      >
+        <Chat Msgs={Msgs} />
+      </BottomSheet>
+      
+    </SafeAreaView>
   );
 };
 
