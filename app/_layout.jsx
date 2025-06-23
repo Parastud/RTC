@@ -5,7 +5,7 @@ import { SocketProvider } from "../context/Socketprovider";
 import "../global.css";
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SocketProvider>
         <PeerProvider>
           <Stack>

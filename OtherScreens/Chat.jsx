@@ -1,6 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { BottomSheetFlatList, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useFocusEffect } from '@react-navigation/native';
 import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useSocket } from '../context/Socketprovider';
@@ -17,14 +16,13 @@ const Chat = ({ Msgs }) => {
     const HandleChange = (text) => setMsg(text);
     const [Msg, setMsg] = useState('');
     return (
-        <BottomSheetView >
+        <BottomSheetView>
             <BottomSheetFlatList
                 data={Msgs}
                 keyExtractor={(item, index) => `${item.Username}-${index}`}
                 contentContainerStyle={{ padding: 10 }}
                 inverted
                 scrollEnabled={true}
-                focusHook={useFocusEffect}
                 renderItem={({ item }) => (
                     <View className="p-2 my-1 bg-gray-100 rounded">
                         {item?.type == "join" &&
@@ -35,19 +33,22 @@ const Chat = ({ Msgs }) => {
                             <><Text className="font-bold">{item.Username}</Text><Text>{item.message}</Text></>}
                     </View>
                 )}
-            />
+                
 
-            <View className="absolute m-24 bg-gray-200 rounded" >
-                <BottomSheetTextInput
-                    placeholder='Enter Msg'
-                    value={Msg}
-                    onChangeText={HandleChange}
-                    className="flex-1 bg-white p-2 rounded"
-                />
-                <TouchableOpacity onPress={HandleMsgSend} className="ml-2">
-                    <MaterialIcons name="send" color="blue" size={20} />
-                </TouchableOpacity>
-            </View>
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+                        <BottomSheetTextInput
+                            placeholder='Enter Msg'
+                            value={Msg}
+                            onChangeText={HandleChange}
+                            style={{ flex: 1, backgroundColor: 'gray', padding: 10, borderRadius: 8 }}
+                        />
+                        <TouchableOpacity onPress={HandleMsgSend} style={{ marginLeft: 8 }}>
+                            <MaterialIcons name="send" color="blue" size={24} />
+                        </TouchableOpacity>
+                    </View>
+
+
         </BottomSheetView>
     )
 }

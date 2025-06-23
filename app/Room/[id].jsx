@@ -1,7 +1,8 @@
-import BottomSheet from '@gorhom/bottom-sheet';
+import { MaterialIcons } from '@expo/vector-icons';
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SafeAreaView } from 'react-native';
+import { Pressable, SafeAreaView, View } from 'react-native';
 import { mediaDevices, RTCView } from 'react-native-webrtc';
 import ToastManager, { Toast } from 'toastify-react-native';
 import { usePeer } from '../../context/Peerprovider';
@@ -15,11 +16,11 @@ const Room = () => {
   const socket = useSocket();
   const Navigation = useNavigation();
   const [Msgs, setMsgs] = useState([]);
-  const [Msg, setMsg] = useState('');
   const [localStream, setLocalStream] = useState(null);
   const bottomSheet = useRef(null);
-  const snapPoints = useMemo(() => ['25%', '50%', '75%', '100%'], [])
+  const snapPoints = useMemo(() => ['25%', '50%', '75%', '100%','1000'], [])
 
+  const popup = ()=>{bottomSheet.current?.snapToIndex(2)}
 
   useEffect(() => {
     Navigation.setOptions({ title: `${getUser()?.RoomId}` });
@@ -78,7 +79,6 @@ const Room = () => {
   const handlejoin = useCallback(async ({ Username, type }) => {
     const offer = await createOffer()
     socket.emit('call', { room: getUser()?.RoomId, offer })
-    console.log("ho")
     Toast.success(`${Username} Joined the Room`)
     setMsgs(prevMsgs => [...prevMsgs, { Username, type }])
   }, [createOffer])
@@ -90,10 +90,27 @@ const Room = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ToastManager />
+      <Pressable onPress={popup} className="absolute right-2">
+      <MaterialIcons name="chat" color="black" size={36}  />
+      </Pressable>
   {RemoteStream && (
+    <View className="w-full h-full">
+      <RTCView
+      streamURL={localStream?.toURL()}
+      style={{
+        width: '50%',
+        height: '30%',
+        zIndex: 20,
+        position: 'absolute',
+        right: 10,
+        bottom: 10,
+        borderWidth: 1,
+        borderColor: '#fff',
+      }}
+      objectFit="cover"
+    />
     <RTCView
-    key={RemoteStream?.id}
-      streamURL={RemoteStream.toURL()}
+      streamURL={RemoteStream?.toURL()}
       style={{
         width: '100%',
         height: '100%',
@@ -102,21 +119,23 @@ const Room = () => {
       }}
       objectFit="cover"
     />
+        
+        
+    </View>
   )}
 
-  {localStream && (
+  {(localStream && !RemoteStream) && (
     <RTCView
-    key={localStream?.id}
-      streamURL={localStream.toURL()}
+      streamURL={localStream?.toURL()}
       style={{
         width: '50%',
         height: '30%',
-        zIndex: 20, // Make sure it's on top
+        zIndex: 20,
         position: 'absolute',
         right: 10,
         bottom: 10,
         borderWidth: 1,
-        borderColor: '#fff', // Optional for debugging
+        borderColor: '#fff',
       }}
       objectFit="cover"
     />
@@ -127,6 +146,19 @@ const Room = () => {
         snapPoints={snapPoints}
         index={-1}
         containerStyle={{ zIndex: 100 }}
+        enablePanDownToClose
+        enableContentPanningGesture
+        enableHandlePanningGesture
+        enableOverDrag
+        enableDynamicSizing={false}
+        backdropComponent={(props) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={2}
+        pressBehavior="close"
+      />
+    )}    
       >
         <Chat Msgs={Msgs} />
       </BottomSheet>
